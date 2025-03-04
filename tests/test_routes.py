@@ -123,4 +123,65 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
+    def test_read_an_account(self):
+        """It should read an Account via API"""
+        account = AccountFactory()  # Crea un account fittizio con dati random
+        response = self.client.post(
+            BASE_URL, json=account.serialize(), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Ottieni l'ID dell'account creato
+        new_account = response.get_json()
+        account_id = new_account["id"]
+
+        # Testiamo la lettura dell'account con GET /accounts/{id}
+        response = self.client.get(f"{BASE_URL}/{account_id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verifica che i dati restituiti siano corretti
+        data = response.get_json()
+        self.assertEqual(data["name"], account.name)
+        self.assertEqual(data["email"], account.email)
+        self.assertEqual(data["address"], account.address)
+        self.assertEqual(data["phone_number"], account.phone_number)
+        self.assertEqual(data["date_joined"], str(account.date_joined))
+
+    def test_get_account_not_found(self):
+        """It should not Read an Account that is not found"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_list_all_accounts(self):
+        """It should List All Accounts"""
+        self._create_accounts(5)  # Crea 5 account fittizi
+        response = self.client.get(BASE_URL)  # Chiamata GET /accounts
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)  # Controlla che ci siano 5 account
+
+    def test_update_account(self):
+        """It should Update an existing Account"""
+        test_account = AccountFactory()  # Crea un account fittizio
+        response = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        js_test_account = response.get_json()
+        js_test_account["name"] = "Updated Name"  # Modifica il nome dell'account
+        response = self.client.put(f"{BASE_URL}/{js_test_account['id']}", json=js_test_account)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_account = response.get_json()
+        self.assertEqual(updated_account["name"], "Updated Name")  # Controlla che il nome sia stato aggiornato
+    
+    def test_delete_account(self):
+        """It should Delete an Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+

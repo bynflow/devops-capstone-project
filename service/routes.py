@@ -61,28 +61,73 @@ def create_accounts():
 # LIST ALL ACCOUNTS
 ######################################################################
 
-# ... place you code here to LIST accounts ...
+@app.route("/accounts", methods=["GET"])
+def list_accounts():
+    """
+    List all Accounts
+    """
+    app.logger.info("Request to list all Accounts")
+    accounts = Account.all()  # Ottiene tutti gli account dal database
+    account_list = [account.serialize() for account in accounts]  # Converte in JSON
+    return jsonify(account_list), status.HTTP_200_OK
+
 
 
 ######################################################################
 # READ AN ACCOUNT
 ######################################################################
 
-# ... place you code here to READ an account ...
+@app.route("/accounts/<int:id>", methods=["GET"])
+def read_accounts(id):
+    """
+    Read an Account
+    """
+    app.logger.info("Request to read an Account")
+    account = Account.find(id)
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, f"Account no found")
+    
+    return account.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 
-# ... place you code here to UPDATE an account ...
+@app.route("/accounts/<int:id>", methods=["PUT"])
+def update_account(id):
+    """
+    Update an existing Account
+    """
+    app.logger.info("Request to update Account with id %s", id)
+    account = Account.find(id)
+
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, "Account not found")
+
+    account.deserialize(request.get_json())  # Aggiorna i dati dell'account
+    account.update()  # Salva le modifiche nel database
+
+    return jsonify(account.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
 # DELETE AN ACCOUNT
 ######################################################################
 
-# ... place you code here to DELETE an account ...
+@app.route("/accounts/<int:id>", methods=["DELETE"])
+def delete_account(id):
+    """
+    Delete an Account
+    """
+    app.logger.info("Request to delete Account with id %s", id)
+    account = Account.find(id)
+
+    if not account:
+        abort(status.HTTP_404_NOT_FOUND, "Account not found")
+
+    account.delete()  # Elimina l'account dal database
+    return "", status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
