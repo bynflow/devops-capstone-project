@@ -38,7 +38,6 @@ class TestAccountService(TestCase):
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
         talisman.force_https = False
-        CORS(app)
 
     @classmethod
     def tearDownClass(cls):
