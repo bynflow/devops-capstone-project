@@ -13,7 +13,6 @@ from service.common import status  # HTTP Status Codes
 from service.models import db, Account, init_db
 from service.routes import app
 from service import talisman
-from service import CORS
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
@@ -125,7 +124,10 @@ class TestAccountService(TestCase):
             json=account.serialize(),
             content_type="test/html"
         )
-        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+        )
 
     def test_read_an_account(self):
         """It should read an Account via API"""
@@ -171,12 +173,17 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         js_test_account = response.get_json()
-        js_test_account["name"] = "Updated Name"  # Modifica il nome dell'account
-        response = self.client.put(f"{BASE_URL}/{js_test_account['id']}", json=js_test_account)
+        # Modifica il nome dell'account
+        js_test_account["name"] = "Updated Name"
+        response = self.client.put(
+            f"{BASE_URL}/{js_test_account['id']}",
+            json=js_test_account
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_account = response.get_json()
-        self.assertEqual(updated_account["name"], "Updated Name")  # Controlla che il nome sia stato aggiornato
+        # Controlla che il nome sia stato aggiornato
+        self.assertEqual(updated_account["name"], "Updated Name")
 
     def test_delete_account(self):
         """It should Delete an Account"""
@@ -188,7 +195,7 @@ class TestAccountService(TestCase):
         """It should not allow an illegal method call"""
         resp = self.client.delete(BASE_URL)
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
     def test_security_headers(self):
         """It should return security headers"""
         response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
@@ -196,15 +203,23 @@ class TestAccountService(TestCase):
         headers = {
             'X-Frame-Options': 'SAMEORIGIN',
             'X-Content-Type-Options': 'nosniff',
-            'Content-Security-Policy': 'default-src \'self\'; object-src \'none\'',
+            'Content-Security-Policy': (
+                'default-src \'self\'; object-src \'none\''
+            ),
             'Referrer-Policy': 'strict-origin-when-cross-origin'
         }
         for key, value in headers.items():
-            self.assertEqual(response.headers.get(key), value)
-    
+            self.assertEqual(
+                response.headers.get(key),
+                value
+            )
+
     def test_cors_security(self):
         """It should return a CORS header"""
         response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Check for the CORS header
-        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
+        self.assertEqual(
+            response.headers.get('Access-Control-Allow-Origin'),
+            '*'
+        )
